@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        IMAGE = "Dhoni-dubey-portfolio1"
+        IMAGE = "dhoni-dubey-portfolio1"
     }
 
     stages {
