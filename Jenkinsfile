@@ -9,7 +9,7 @@ pipeline {
 
         stage('Clone') {
             steps {
-                echo "Code pulled automatically"
+                echo "Code pulled automatically by Jenkins"
             }
         }
 
@@ -19,9 +19,15 @@ pipeline {
             }
         }
 
-        stage('Run Container') {
+        stage('Load Image to Kind') {
             steps {
-                sh 'docker run -d -p 80:80 $IMAGE:latest'
+                sh 'kind load docker-image $IMAGE:latest'
+            }
+        }
+
+        stage('Deploy to Kubernetes') {
+            steps {
+                sh 'helm upgrade --install portfolio ~/Cluster/apache-chart'
             }
         }
     }
