@@ -3,11 +3,12 @@ pipeline {
 
     environment {
         IMAGE = "dhoni-dubey-portfolio1"
+        CHART_PATH = "/home/ubuntu/Cluster/apache-chart"
     }
 
     stages {
 
-        stage('Clone') {
+        stage('Checkout Code') {
             steps {
                 echo "Code pulled automatically by Jenkins"
             }
@@ -15,19 +16,35 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                sh 'docker build -t $IMAGE:latest .'
+                sh '''
+                docker build -t $IMAGE:latest .
+                docker images
+                '''
             }
         }
 
         stage('Load Image to Kind') {
             steps {
-                sh 'kind load docker-image $IMAGE:latest'
+                sh '''
+                kind load docker-image $IMAGE:latest
+                '''
             }
         }
 
         stage('Deploy to Kubernetes') {
             steps {
-                sh 'helm upgrade --install portfolio ~/Cluster/apache-chart'
+                sh '''
+                helm upgrade --install portfolio $CHART_PATH
+                '''
+            }
+        }
+
+        stage('Verify Deployment') {
+            steps {
+                sh '''
+                kubectl get pods
+                kubectl get svc
+                '''
             }
         }
     }
