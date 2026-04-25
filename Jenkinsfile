@@ -44,7 +44,8 @@ pipeline {
                   --namespace $NAMESPACE \
                   --create-namespace \
                   --set image.repository=$IMAGE \
-                  --set image.tag=$TAG
+                  --set image.tag=$TAG \
+                  --wait --timeout 120s
                 '''
             }
         }
@@ -52,6 +53,7 @@ pipeline {
         stage('Verify Deployment') {
             steps {
                 sh '''
+                kubectl rollout status deployment/$RELEASE_NAME -n $NAMESPACE
                 kubectl get pods -n $NAMESPACE
                 kubectl get svc -n $NAMESPACE
                 '''
