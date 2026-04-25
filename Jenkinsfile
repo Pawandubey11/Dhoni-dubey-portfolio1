@@ -3,22 +3,26 @@ pipeline {
 
     environment {
         IMAGE = "dhoni-dubey-portfolio1"
-        CHART_PATH = "/home/ubuntu/Cluster/apache-chart"
+        TAG = "latest"
+        CHART_PATH = "/home/ubuntu/Cluster/apache-helm"
+        RELEASE_NAME = "portfolio"
+        NAMESPACE = "default"
     }
 
     stages {
 
         stage('Checkout Code') {
             steps {
-                echo "Code pulled automatically by Jenkins"
+                checkout scm
             }
         }
 
         stage('Build Docker Image') {
             steps {
                 sh '''
-                docker build -t $IMAGE:latest .
-                docker images
+                set -e
+                docker build -t $IMAGE:$TAG .
+                docker images | grep $IMAGE
                 '''
             }
         }
@@ -26,15 +30,21 @@ pipeline {
         stage('Load Image to Kind') {
             steps {
                 sh '''
-                kind load docker-image $IMAGE:latest
+                set -e
+                kind load docker-image $IMAGE:$TAG
                 '''
             }
         }
 
-        stage('Deploy to Kubernetes') {
+        stage('Deploy to Kubernetes using Helm') {
             steps {
                 sh '''
-                helm upgrade --install portfolio $CHART_PATH
+                set -e
+                helm upgrade --install $RELEASE_NAME $CHART_PATH \
+                  --namespace $NAMESPACE \
+                  --create-namespace \
+                  --set image.repository=$IMAGE \
+                  --set image.tag=$TAG
                 '''
             }
         }
@@ -42,8 +52,8 @@ pipeline {
         stage('Verify Deployment') {
             steps {
                 sh '''
-                kubectl get pods
-                kubectl get svc
+                kubectl get pods -n $NAMESPACE
+                kubectl get svc -n $NAMESPACE
                 '''
             }
         }
